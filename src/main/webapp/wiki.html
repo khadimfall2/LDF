@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Linked Data Fragments</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            padding: 0;
+            background-color: #f9f9f9;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        h2 {
+            color: #555;
+        }
+        section {
+            margin-bottom: 30px;
+        }
+        form {
+            margin: 20px auto;
+            padding: 20px;
+            width: 50%;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        label {
+            display: block;
+            margin: 10px 0 5px;
+            font-weight: bold;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            font-size: 16px;
+            color: #fff;
+            background-color: #007BFF;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #results, #insertStatus {
+            margin: 20px auto;
+            padding: 20px;
+            width: 80%;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        th, td {
+            text-align: left;
+            padding: 8px;
+            border: 1px solid #ddd;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+    <h1>#Linked Data Fragments</h1>
+
+    <!-- Query Section -->
+    <section>
+        <h2>Query by Quadruple Pattern</h2>
+        <form id="queryForm">
+            <label for="subject">Subject:</label>
+            <input type="text" id="subject" name="subject" placeholder="Enter subject" aria-label="Subject">
+            
+            <label for="predicate">Predicate:</label>
+            <input type="text" id="predicate" name="predicate" placeholder="Enter predicate" aria-label="Predicate">
+            
+            <label for="object">Object:</label>
+            <input type="text" id="object" name="object" placeholder="Enter object" aria-label="Object">
+            
+            <label for="graph">Graph:</label>
+            <input type="text" id="graph" name="graph" placeholder="Enter graph name" aria-label="Graph">
+            
+            <button type="submit">Find matching quads</button>
+        </form>
+        <h3>Results:</h3>
+        <div id="results"></div>
+    </section>
+
+    <!-- Insert Section -->
+    <section>
+        <h2>Insert a New Quad</h2>
+        <form id="insertForm">
+            <label for="insertSubject">Subject:</label>
+            <input type="text" id="insertSubject" name="insertSubject" placeholder="Enter subject" aria-label="Insert Subject">
+            
+            <label for="insertPredicate">Predicate:</label>
+            <input type="text" id="insertPredicate" name="insertPredicate" placeholder="Enter predicate" aria-label="Insert Predicate">
+            
+            <label for="insertObject">Object:</label>
+            <input type="text" id="insertObject" name="insertObject" placeholder="Enter object" aria-label="Insert Object">
+            
+            <label for="insertGraph">Graph:</label>
+            <input type="text" id="insertGraph" name="insertGraph" placeholder="Enter graph name" aria-label="Insert Graph">
+            
+            <button type="submit">Insert Quad</button>
+        </form>
+        <h3>Insert Status:</h3>
+        <div id="insertStatus"></div>
+    </section>
+
+    <!-- Script -->
+    <script>
+        // Base URL de l'API
+        const API_BASE_URL = 'http://localhost:8080/_ah/api/myApi/v1';
+        let nextCursor = null;
+
+        // Gestion du formulaire de recherche
+        document.getElementById('queryForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+            nextCursor = null; // Réinitialise le curseur
+            fetchQuads();
+        });
+
+        // Fonction pour récupérer les Quads
+        function fetchQuads() {
+            const subject = document.getElementById('subject').value;
+            const predicate = document.getElementById('predicate').value;
+            const object = document.getElementById('object').value;
+            const graph = document.getElementById('graph').value;
+
+            let queryUrl = `${API_BASE_URL}/getQuads?`;
+            if (subject) queryUrl += `subject=${encodeURIComponent(subject)}&`;
+            if (predicate) queryUrl += `predicate=${encodeURIComponent(predicate)}&`;
+            if (object) queryUrl += `object=${encodeURIComponent(object)}&`;
+            if (graph) queryUrl += `graph=${encodeURIComponent(graph)}&`;
+            if (nextCursor) queryUrl += `cursor=${nextCursor}`;
+
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '<p>Loading...</p>';
+
+            fetch(queryUrl)
+                .then(response => {
+                    if (!response.ok) throw new Error(`HTTP Error ${response.status}`);
+                    return response.json();
+                })
+                .then(data => {
+                    resultsDiv.innerHTML = '';
+                    if (data.items && data.items.length > 0) {
+                        let table = `<table>
+                                        <thead>
+                                            <tr>
+                                                <th>Subject</th>
+                                                <th>Predicate</th>
+                                                <th>Object</th>
+                                                <th>Graph</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>`;
+                        data.items.forEach(quad => {
+                            table += `<tr>
+                                        <td>${quad.subject || ''}</td>
+                                        <td>${quad.predicate || ''}</td>
+                                        <td>${quad.object || ''}</td>
+                                        <td>${quad.graph || ''}</td>
+                                      </tr>`;
+                        });
+                        table += `</tbody></table>`;
+                        resultsDiv.innerHTML = table;
+
+                        nextCursor = data.nextPageToken;
+                        if (nextCursor) {
+                            const nextButton = document.createElement('button');
+                            nextButton.textContent = 'Next Page';
+                            nextButton.onclick = fetchQuads;
+                            resultsDiv.appendChild(nextButton);
+                        }
+                    } else {
+                        resultsDiv.innerHTML = '<p>No results found.</p>';
+                    }
+                })
+                .catch(err => {
+                    console.error('Error fetching quads:', err);
+                    resultsDiv.innerHTML = `<p>Error retrieving results: ${err.message}</p>`;
+                });
+        }
+
+        // Gestion du formulaire d'insertion
+        document.getElementById('insertForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            const subject = document.getElementById('insertSubject').value;
+            const predicate = document.getElementById('insertPredicate').value;
+            const object = document.getElementById('insertObject').value;
+            const graph = document.getElementById('insertGraph').value;
+
+            const insertUrl = `${API_BASE_URL}/insertQuad`;
+
+            const insertStatus = document.getElementById('insertStatus');
+            insertStatus.innerHTML = '<p>Inserting...</p>';
+
+            fetch(insertUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ subject, predicate, object, graph }),
+            })
+                .then(response => {
+                    if (!response.ok) throw new Error(`HTTP Error ${response.status}`);
+                    return response.json();
+                })
+                .then(data => {
+                    insertStatus.innerHTML = `<p>Quad inserted successfully!</p>`;
+                })
+                .catch(err => {
+                    console.error('Error inserting quad:', err);
+                    insertStatus.innerHTML = `<p>Error inserting quad: ${err.message}</p>`;
+                });
+        });
+    </script>
+</body>
+</html>
+

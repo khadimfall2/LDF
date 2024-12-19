@@ -1,0 +1,10 @@
+
+runtime: java17          # Assurez-vous que la version Java correspond (ici Java 17)
+instance_class: F1       # Petite instance pour App Engine
+
+handlers:
+- url: /.*
+  script: auto
+  secure: always         # Force HTTPS pour des raisons de sécurité
+
+entrypoint: java -jar target/LDF-1.0-SNAPSHOT.jar
