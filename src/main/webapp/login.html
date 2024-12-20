@@ -1,0 +1,45 @@
+<html lang="en">
+  <body>
+    <!-- Importation de la bibliothèque JWT pour décoder le token -->
+    <script src="https://cdn.jsdelivr.net/npm/jwt-decode/build/jwt-decode.min.js"></script>
+
+    <!-- Importation de la bibliothèque Google Sign-In -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+
+    <!-- Bouton Google Sign-In -->
+    <div id="g_id_onload"
+         data-client_id="927375242383-jm45ei76rdsfv7tmjv58tcsjjpvgkdje.apps.googleusercontent.com"
+         data-callback="handleCredentialResponse">
+    </div>
+    <div class="g_id_signin" data-type="standard"></div>
+
+    <!-- Affichage de l'état -->
+    <p id="statusMessage"></p> 
+
+    <script>
+      function handleCredentialResponse(response) {
+          console.log("Callback received: " + response.credential);
+
+          // Décodage du JWT
+          const responsePayload = jwt_decode(response.credential);
+
+          console.log("ID: " + responsePayload.sub);
+          console.log("Full Name: " + responsePayload.name);
+          console.log("Given Name: " + responsePayload.given_name);
+          console.log("Family Name: " + responsePayload.family_name);
+          console.log("Image URL: " + responsePayload.picture);
+          console.log("Email: " + responsePayload.email);
+
+          // Stocker le token d'authentification dans localStorage
+          localStorage.setItem('auth_token', response.credential);
+
+          // Message de confirmation
+          document.getElementById('statusMessage').innerText = "Authentication successful!";
+
+          // Rediriger vers la page principale après authentification
+          window.location.href = "index.html"; // Changez "index.html" par la page où se trouve le bouton "Insert Quad"
+      }
+    </script>
+  </body>
+</html>
+

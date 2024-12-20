@@ -206,7 +206,7 @@ public CollectionResponse<Entity> getQuads(@Named("subject") @Nullable String su
 		return e;
 	}
 
-	@ApiMethod(name = "mypost", httpMethod = HttpMethod.GET)
+	@ApiMethod(name = "mypost"; httpMethod = HttpMethod.GET)
 	public CollectionResponse<Entity> mypost(@Named("name") String name, @Nullable @Named("next") String cursorString) {
 
 	    Query q = new Query("Post").setFilter(new FilterPredicate("owner", FilterOperator.EQUAL, name));

@@ -128,112 +128,129 @@
     </section>
 
     <!-- Script -->
+
+
     <script>
         // Base URL de l'API
-        const API_BASE_URL = 'http://localhost:8080/_ah/api/myApi/v1';
-        let nextCursor = null;
+const API_BASE_URL = 'http://localhost:8080/_ah/api/myApi/v1';
+let nextCursor = null;
 
-        // Gestion du formulaire de recherche
-        document.getElementById('queryForm').addEventListener('submit', function (e) {
-            e.preventDefault();
-            nextCursor = null; // Réinitialise le curseur
-            fetchQuads();
-        });
+// Gestion du formulaire de recherche
+document.getElementById('queryForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    nextCursor = null; // Réinitialise le curseur
+    fetchQuads();
+});
 
-        // Fonction pour récupérer les Quads
-        function fetchQuads() {
-            const subject = document.getElementById('subject').value;
-            const predicate = document.getElementById('predicate').value;
-            const object = document.getElementById('object').value;
-            const graph = document.getElementById('graph').value;
+// Fonction pour récupérer les Quads
+function fetchQuads() {
+    const subject = document.getElementById('subject').value;
+    const predicate = document.getElementById('predicate').value;
+    const object = document.getElementById('object').value;
+    const graph = document.getElementById('graph').value;
 
-            let queryUrl = `${API_BASE_URL}/getQuads?`;
-            if (subject) queryUrl += `subject=${encodeURIComponent(subject)}&`;
-            if (predicate) queryUrl += `predicate=${encodeURIComponent(predicate)}&`;
-            if (object) queryUrl += `object=${encodeURIComponent(object)}&`;
-            if (graph) queryUrl += `graph=${encodeURIComponent(graph)}&`;
-            if (nextCursor) queryUrl += `cursor=${nextCursor}`;
+    let queryUrl = `${API_BASE_URL}/getQuads?`;
+    if (subject) queryUrl += `subject=${encodeURIComponent(subject)}&`;
+    if (predicate) queryUrl += `predicate=${encodeURIComponent(predicate)}&`;
+    if (object) queryUrl += `object=${encodeURIComponent(object)}&`;
+    if (graph) queryUrl += `graph=${encodeURIComponent(graph)}&`;
+    if (nextCursor) queryUrl += `cursor=${nextCursor}`;
 
-            const resultsDiv = document.getElementById('results');
-            resultsDiv.innerHTML = '<p>Loading...</p>';
+    const resultsDiv = document.getElementById('results');
+    resultsDiv.innerHTML = '<p>Loading...</p>';
 
-            fetch(queryUrl)
-                .then(response => {
-                    if (!response.ok) throw new Error(`HTTP Error ${response.status}`);
-                    return response.json();
-                })
-                .then(data => {
-                    resultsDiv.innerHTML = '';
-                    if (data.items && data.items.length > 0) {
-                        let table = `<table>
-                                        <thead>
-                                            <tr>
-                                                <th>Subject</th>
-                                                <th>Predicate</th>
-                                                <th>Object</th>
-                                                <th>Graph</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>`;
-                        data.items.forEach(quad => {
-                            table += `<tr>
-                                        <td>${quad.subject || ''}</td>
-                                        <td>${quad.predicate || ''}</td>
-                                        <td>${quad.object || ''}</td>
-                                        <td>${quad.graph || ''}</td>
-                                      </tr>`;
-                        });
-                        table += `</tbody></table>`;
-                        resultsDiv.innerHTML = table;
-
-                        nextCursor = data.nextPageToken;
-                        if (nextCursor) {
-                            const nextButton = document.createElement('button');
-                            nextButton.textContent = 'Next Page';
-                            nextButton.onclick = fetchQuads;
-                            resultsDiv.appendChild(nextButton);
-                        }
-                    } else {
-                        resultsDiv.innerHTML = '<p>No results found.</p>';
-                    }
-                })
-                .catch(err => {
-                    console.error('Error fetching quads:', err);
-                    resultsDiv.innerHTML = `<p>Error retrieving results: ${err.message}</p>`;
+    fetch(queryUrl)
+        .then(response => {
+            if (!response.ok) throw new Error(`HTTP Error ${response.status}`);
+            return response.json();
+        })
+        .then(data => {
+            resultsDiv.innerHTML = '';
+            if (data.items && data.items.length > 0) {
+                let table = `<table>
+                                <thead>
+                                    <tr>
+                                        <th>Subject</th>
+                                        <th>Predicate</th>
+                                        <th>Object</th>
+                                        <th>Graph</th>
+                                    </tr>
+                                </thead>
+                                <tbody>`;
+                data.items.forEach(quad => {
+                    table += `<tr>
+                                <td>${quad.subject || ''}</td>
+                                <td>${quad.predicate || ''}</td>
+                                <td>${quad.object || ''}</td>
+                                <td>${quad.graph || ''}</td>
+                              </tr>`;
                 });
-        }
+                table += `</tbody></table>`;
+                resultsDiv.innerHTML = table;
 
-        // Gestion du formulaire d'insertion
-        document.getElementById('insertForm').addEventListener('submit', function (e) {
-            e.preventDefault();
-
-            const subject = document.getElementById('insertSubject').value;
-            const predicate = document.getElementById('insertPredicate').value;
-            const object = document.getElementById('insertObject').value;
-            const graph = document.getElementById('insertGraph').value;
-
-            const insertUrl = `${API_BASE_URL}/insertQuad`;
-
-            const insertStatus = document.getElementById('insertStatus');
-            insertStatus.innerHTML = '<p>Inserting...</p>';
-
-            fetch(insertUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ subject, predicate, object, graph }),
-            })
-                .then(response => {
-                    if (!response.ok) throw new Error(`HTTP Error ${response.status}`);
-                    return response.json();
-                })
-                .then(data => {
-                    insertStatus.innerHTML = `<p>Quad inserted successfully!</p>`;
-                })
-                .catch(err => {
-                    console.error('Error inserting quad:', err);
-                    insertStatus.innerHTML = `<p>Error inserting quad: ${err.message}</p>`;
-                });
+                nextCursor = data.nextPageToken;
+                if (nextCursor) {
+                    const nextButton = document.createElement('button');
+                    nextButton.textContent = 'Next Page';
+                    nextButton.onclick = fetchQuads;
+                    resultsDiv.appendChild(nextButton);
+                }
+            } else {
+                resultsDiv.innerHTML = '<p>No results found.</p>';
+            }
+        })
+        .catch(err => {
+            console.error('Error fetching quads:', err);
+            resultsDiv.innerHTML = `<p>Error retrieving results: ${err.message}</p>`;
         });
+}
+
+// Gestion du formulaire d'insertion
+document.getElementById('insertForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+
+    // Vérifiez si l'utilisateur est authentifié
+    const token = localStorage.getItem('auth_token'); // Récupération du token stocké
+    if (!token) {
+        // Redirigez vers la page d'authentification
+        alert("You need to log in first! Redirecting to login page...");
+        window.location.href = 'login.html'; // Remplacez 'login.html' par le chemin correct
+        return;
+    }
+
+    // Si l'utilisateur est authentifié, insérez le quad
+    const subject = document.getElementById('insertSubject').value;
+    const predicate = document.getElementById('insertPredicate').value;
+    const object = document.getElementById('insertObject').value;
+    const graph = document.getElementById('insertGraph').value;
+
+    const insertUrl = `${API_BASE_URL}/insertQuad`;
+
+    const insertStatus = document.getElementById('insertStatus');
+    insertStatus.innerHTML = '<p>Inserting...</p>';
+
+    fetch(insertUrl, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}` // Inclure le token d'authentification
+        },
+        body: JSON.stringify({ subject, predicate, object, graph }),
+    })
+        .then(response => {
+            if (!response.ok) throw new Error(`HTTP Error ${response.status}`);
+            return response.json();
+        })
+        .then(data => {
+            insertStatus.innerHTML = `<p>Quad inserted successfully!</p>`;
+        })
+        .catch(err => {
+            console.error('Error inserting quad:', err);
+            insertStatus.innerHTML = `<p>Error inserting quad: ${err.message}</p>`;
+        });
+});
+
+
     </script>
 </body>
 </html>
